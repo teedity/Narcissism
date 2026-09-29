@@ -3,10 +3,10 @@
 0,HeartMode,1,,,,,,
 0,TLPause,,,,,,,
 
-0,BoneVRepeat,513,257,40,2,140,56,90
-0.4,BoneVRepeat,513,345,40,2,140,56,90
-0,BoneVRepeat,128,257,40,0,140,56,90
-0.4,BoneVRepeat,128,345,40,0,140,56,90
+0,BoneVRepeat,513,257,50,2,67,56,130
+0.4,BoneVRepeat,513,345,50,2,67,56,130
+0,BoneVRepeat,128,257,50,0,67,56,130
+0.4,BoneVRepeat,128,345,50,0,67,56,130
 
 0.8,SansSlam,1
 0,SansBody,HandDown

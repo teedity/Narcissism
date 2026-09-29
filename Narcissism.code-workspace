@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "Narcissism",
+			"path": "."
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Narcissism",
+		"liveServer.settings.port": 5501
+	}
+}

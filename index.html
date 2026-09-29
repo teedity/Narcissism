@@ -43,6 +43,97 @@
 			touch-action: none;
 			-ms-touch-action: none;
 		}
+
+		/* In-game Custom Attack Editor Modal */
+		#attack-editor-modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100vw;
+			height: 100vh;
+			z-index: 99999;
+			background: rgba(0, 0, 0, 0.96);
+			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
+			padding: 16px;
+			color: #fff;
+			font-family: "Courier New", Courier, monospace;
+		}
+		#attack-editor-modal[hidden] {
+			display: none !important;
+		}
+		.editor-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding-bottom: 12px;
+			border-bottom: 2px solid #fff;
+			margin-bottom: 12px;
+		}
+		.editor-title {
+			font-size: 18px;
+			font-weight: bold;
+			letter-spacing: 1px;
+		}
+		.editor-actions {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+		.editor-btn {
+			background: #000;
+			color: #fff;
+			border: 2px solid #fff;
+			padding: 6px 14px;
+			font-family: inherit;
+			font-size: 13px;
+			font-weight: bold;
+			cursor: pointer;
+			text-transform: uppercase;
+		}
+		.editor-btn:hover, .editor-btn:focus {
+			background: #fff;
+			color: #000;
+			outline: none;
+		}
+		.editor-btn.btn-primary {
+			background: #ff0;
+			color: #000;
+			border-color: #ff0;
+		}
+		.editor-btn.btn-primary:hover {
+			background: #fff;
+			border-color: #fff;
+		}
+		.editor-textarea {
+			flex: 1;
+			width: 100%;
+			min-height: 0;
+			background: #050505;
+			color: #fff;
+			border: 1px solid #444;
+			padding: 14px;
+			font-family: "Courier New", Courier, monospace;
+			font-size: 14px;
+			line-height: 1.5;
+			resize: none;
+			outline: none;
+			white-space: pre;
+			tab-size: 4;
+			box-sizing: border-box;
+		}
+		.editor-textarea:focus {
+			border-color: #fff;
+		}
+		.editor-footer {
+			margin-top: 10px;
+			font-size: 12px;
+			color: #888;
+			display: flex;
+			justify-content: space-between;
+		}
     </style>
 	
 
@@ -141,6 +232,188 @@
 			return;
 		};
     </script>
+
+	<!-- In-game Custom Attack Editor Modal -->
+	<div id="attack-editor-modal" hidden>
+		<div class="editor-header">
+			<span class="editor-title">★ CUSTOM ATTACK CREATOR ★</span>
+			<div class="editor-actions">
+				<button type="button" class="editor-btn" id="btn-sample-attack">Template</button>
+				<button type="button" class="editor-btn" id="btn-import-attack">Import CSV</button>
+				<input type="file" id="import-csv-file" accept=".csv,text/csv" style="display: none;">
+				<button type="button" class="editor-btn" id="btn-download-attack">Download CSV</button>
+				<button type="button" class="editor-btn btn-primary" id="btn-play-attack">▶ PLAY ATTACK</button>
+				<button type="button" class="editor-btn" id="btn-close-editor">✕ CLOSE</button>
+			</div>
+		</div>
+		<textarea id="attack-code" class="editor-textarea" spellcheck="false" placeholder="Write your attack CSV commands here..."></textarea>
+		<div class="editor-footer">
+			<span>Press PLAY ATTACK to save and load directly into Sans's battle.</span>
+			<span id="editor-char-status">Saved in browser storage</span>
+		</div>
+	</div>
+
+	<script>
+	(function() {
+		"use strict";
+		const STORAGE_KEY = "custom-attack.csv.v1";
+		const modal = document.getElementById("attack-editor-modal");
+		const codeArea = document.getElementById("attack-code");
+		const statusText = document.getElementById("editor-char-status");
+		const fileInput = document.getElementById("import-csv-file");
+
+		const DEFAULT_ATTACK = [
+			"0,CombatZoneResize,133,251,508,391,TLResume,,",
+			"0,HeartTeleport,320,376,,,,,",
+			"0,HeartMode,1,,,,,,",
+			"0,TLPause,,,,,,,",
+			"",
+			"0,BoneVRepeat,513,257,30,2,120,20,100",
+			"0.5,BoneVRepeat,513,355,30,2,120,20,100",
+			"0,BoneVRepeat,128,257,30,0,120,20,100",
+			"0.5,BoneVRepeat,128,355,30,0,120,20,100",
+			"",
+			"1,SansSlam,1",
+			"0,SansBody,HandDown",
+			"1,SansSlam,3",
+			"0,SansBody,HandUp",
+			"",
+			"1,SansSlam,1",
+			"0,SansBody,HandDown",
+			"1,SansSlam,3",
+			"0,SansBody,HandUp",
+			"",
+			"1,SansSlam,1",
+			"0,SansBody,HandDown",
+			"1,SansSlam,3",
+			"0,SansBody,HandUp",
+			"",
+			"1,SansSlam,1",
+			"0,SansBody,HandDown",
+			"1,SansSlam,3",
+			"0,SansBody,HandUp",
+			"",
+			"1,EndAttack,,,,,,,"
+		].join("\n");
+
+		function getSavedAttack() {
+			try {
+				const saved = localStorage.getItem(STORAGE_KEY);
+				if (saved && saved.trim().length > 0) return saved;
+			} catch (_) {}
+			return DEFAULT_ATTACK;
+		}
+
+		function saveAttack(text) {
+			try {
+				localStorage.setItem(STORAGE_KEY, text);
+			} catch (_) {}
+		}
+
+		window.openCustomAttackEditor = function() {
+			codeArea.value = getSavedAttack();
+			modal.removeAttribute("hidden");
+			codeArea.focus();
+		};
+
+		window.closeCustomAttackEditor = function() {
+			modal.setAttribute("hidden", "");
+		};
+
+		codeArea.addEventListener("input", function() {
+			saveAttack(codeArea.value);
+			statusText.textContent = "Saved to browser storage (" + codeArea.value.length + " chars)";
+		});
+
+		document.getElementById("btn-close-editor").addEventListener("click", function() {
+			window.closeCustomAttackEditor();
+		});
+
+		document.getElementById("btn-sample-attack").addEventListener("click", function() {
+			if (confirm("Reset editor to default template?")) {
+				codeArea.value = DEFAULT_ATTACK;
+				saveAttack(DEFAULT_ATTACK);
+				statusText.textContent = "Reset to default template";
+			}
+		});
+
+		document.getElementById("btn-download-attack").addEventListener("click", function() {
+			const blob = new Blob([codeArea.value], { type: "text/csv;charset=utf-8" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = "custom_attack.csv";
+			a.click();
+			setTimeout(() => URL.revokeObjectURL(url), 60000);
+		});
+
+		document.getElementById("btn-import-attack").addEventListener("click", function() {
+			fileInput.value = "";
+			fileInput.click();
+		});
+
+		fileInput.addEventListener("change", function() {
+			const file = fileInput.files && fileInput.files[0];
+			if (!file) return;
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				const content = e.target.result;
+				codeArea.value = content;
+				saveAttack(content);
+				statusText.textContent = "Imported " + file.name;
+			};
+			reader.readAsText(file);
+		});
+
+		document.getElementById("btn-play-attack").addEventListener("click", function() {
+			const attackText = codeArea.value;
+			saveAttack(attackText);
+			window.closeCustomAttackEditor();
+
+			if (typeof window.runCustomAttack === "function") {
+				window.runCustomAttack(attackText);
+			} else {
+				const blob = new Blob([attackText], { type: "text/plain;charset=utf-8" });
+				const blobUrl = URL.createObjectURL(blob);
+
+				if (window.c2FileChooser) {
+					window.c2FileChooser.customUrl = blobUrl;
+					if (window.c2FileChooser.Lb) {
+						window.c2FileChooser.Lb.onchange();
+					}
+				} else {
+					const file = new File([attackText], "custom.csv", { type: "text/csv" });
+					const fileChooser = document.getElementById("filechooser");
+					if (fileChooser && typeof DataTransfer !== "undefined") {
+						const dt = new DataTransfer();
+						dt.items.add(file);
+						fileChooser.files = dt.files;
+						fileChooser.dispatchEvent(new Event("change", { bubbles: true }));
+					}
+				}
+			}
+		});
+
+		// Intercept the game's "Load file" action to open the interactive editor
+		function hookFileChooser() {
+			const fc = document.getElementById("filechooser");
+			if (fc && !fc.dataset.hooked) {
+				fc.dataset.hooked = "true";
+				fc.focus = function() {
+					window.openCustomAttackEditor();
+				};
+				fc.click = function(e) {
+					if (e) e.preventDefault();
+					window.openCustomAttackEditor();
+				};
+			}
+		}
+
+		setInterval(hookFileChooser, 300);
+		document.addEventListener("DOMContentLoaded", hookFileChooser);
+	})();
+	</script>
+
 	<!-- Google tag (gtag.js) -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-6S9Y2CXQ4H"></script>
 	<script>
